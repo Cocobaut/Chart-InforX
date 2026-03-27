@@ -16,10 +16,9 @@ TASK3_AXIS_OUT = PIPELINE_ROOT / "task3_axis_analysis"
 TASK4_LEGEND_OUT = PIPELINE_ROOT / "task4_legend_analysis"
 TASK5_EXTRACTION_OUT = PIPELINE_ROOT / "task5_detect_extraction"
 
-model_path_layoutlmv3 = str(WEIGHTS_ROOT / "checkpoint-10000")
+model_path_layoutlmv3 = str(WEIGHTS_ROOT / "LayoutLMv3")
 model_path_yolo = str(WEIGHTS_ROOT / "yolo_elements.pt")
 model_path_yolo_text = str(WEIGHTS_ROOT / "yolo_text.pt")
-model_path_yolo_recognize = str(WEIGHTS_ROOT / "best_det.pt")
 
 # Requested config names.
 Task1_detection = {
@@ -32,7 +31,6 @@ Task1_recognize = {
     "input": str(DEFAULT_IMAGE_DIR),
     "input_json": str(TASK1_DETECTION_OUT),
     "output": str(TASK1_RECOGNIZE_OUT),
-    "weight": model_path_yolo_recognize,
 }
 
 Task2_role_classifier = {
@@ -78,6 +76,8 @@ Task5_detect_extraction = {
     "output_dir": str(TASK5_EXTRACTION_OUT),
     "output_json": str(TASK5_EXTRACTION_OUT / "result.json"),
     "output_csv": str(TASK5_EXTRACTION_OUT / "result.csv"),
+    "output_paper_json": str(TASK5_EXTRACTION_OUT / "result_paper_format.json"),
+    "output_paper_txt": str(TASK5_EXTRACTION_OUT / "result_paper_format.txt"),
     "axis_output_json": str(TASK3_AXIS_OUT),
     "legend_output_json": str(TASK4_LEGEND_OUT),
 }

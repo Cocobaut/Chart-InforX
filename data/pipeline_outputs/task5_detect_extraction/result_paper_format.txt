@@ -1,0 +1,8 @@
+file name      : PMC4180152___12889_2013_7086_Fig3_HTML.jpg
+doi            : []
+x-text         : []
+x-labels       : ['Female', 'Male', 'All']
+y-text         : ['rhoearal diseases per 100 person years at r']
+y-labels       : ['80.0', '70.0', '60.0', '50.0', '40.0', '30.0', '20.0', '10.0', '0.0']
+legends        : ['36-55 years', '16-35 years', '<55 years']
+data           : {'36-55 years': {'Female': 32.0, 'Male': 17.8, 'All': 25.0}, '16-35 years': {'Female': 30.7, 'Male': 24.6, 'All': 28.3}, '<55 years': {'Female': 27.2, 'Male': 50.9, 'All': 39.3}}

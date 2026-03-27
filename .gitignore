@@ -2,15 +2,10 @@
 Dataset_Test/
 Dataset_Train/
 DatasetPredict/
-checkpoint-10000/
 temp_uploads/
 
 # Model weights / checkpoints
-weights/*.pt
-weights/*.pth
-weights/*.onnx
-weights/*.rar
-!weights/download_weights.md
+weights/
 
 # Python cache and build outputs
 __pycache__/

@@ -2,6 +2,7 @@
 
 import json
 import os
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -318,6 +319,132 @@ def _write_json(path: Path, payload: dict[str, Any]):
         json.dump(payload, file, ensure_ascii=False, indent=2)
 
 
+def _get_sorted_texts(items, axis_type: str):
+    normalized = []
+    for text, rect in items or []:
+        text_norm = str(text).strip()
+        if not text_norm:
+            continue
+        if not isinstance(rect, (list, tuple)) or len(rect) < 4:
+            continue
+        x, y, w, h = map(float, rect[:4])
+        normalized.append((text_norm, (x, y, w, h)))
+
+    if axis_type == "x":
+        normalized.sort(key=lambda item: item[1][0] + item[1][2] / 2.0)
+    elif axis_type == "y":
+        normalized.sort(key=lambda item: item[1][1] + item[1][3] / 2.0)
+    elif axis_type == "title_x":
+        normalized.sort(key=lambda item: item[1][0])
+    elif axis_type == "title_y":
+        normalized.sort(key=lambda item: item[1][1])
+
+    texts = []
+    for text, _ in normalized:
+        if text not in texts:
+            texts.append(text)
+    return texts
+
+
+def _get_text_blocks_from_payload(task_payload: dict[str, Any]):
+    blocks = (
+        task_payload.get("task3", {})
+        .get("input", {})
+        .get("task2_output", {})
+        .get("text_blocks")
+    )
+    if isinstance(blocks, list):
+        return blocks
+
+    blocks = (
+        task_payload.get("task2", {})
+        .get("output", {})
+        .get("text_blocks")
+    )
+    if isinstance(blocks, list):
+        return blocks
+
+    return []
+
+
+def _extract_doi_candidates(image_name: str, task_payload: dict[str, Any]):
+    doi_pattern = re.compile(r"10\.\d{4,9}/[-._;()/:A-Z0-9]+", re.IGNORECASE)
+    candidates = []
+
+    def add_matches(text_value):
+        if text_value is None:
+            return
+        text_str = str(text_value)
+        for match in doi_pattern.findall(text_str):
+            doi = match.rstrip(".,;:)]}>")
+            doi = f"doi:{doi}"
+            if doi not in candidates:
+                candidates.append(doi)
+
+    add_matches(image_name)
+    for block in _get_text_blocks_from_payload(task_payload):
+        add_matches(block.get("text", ""))
+
+    return candidates
+
+
+def _order_data_by_xlabels(data: dict[str, Any], x_labels: list[str]):
+    if not isinstance(data, dict):
+        return data
+
+    ordered_data = {}
+    for legend, legend_values in data.items():
+        if not isinstance(legend_values, dict):
+            ordered_data[legend] = legend_values
+            continue
+
+        ordered_legend_values = {}
+        for x_label in x_labels:
+            if x_label in legend_values:
+                ordered_legend_values[x_label] = legend_values[x_label]
+        for key, value in legend_values.items():
+            if key not in ordered_legend_values:
+                ordered_legend_values[key] = value
+
+        ordered_data[legend] = ordered_legend_values
+
+    return ordered_data
+
+
+def _build_paper_format_record(image_name: str, task_payload: dict[str, Any], axis_result: dict[str, Any], legendtexts, data):
+    x_text = _get_sorted_texts(axis_result.get("x_title", []), axis_type="title_x")
+    x_labels = _get_sorted_texts(axis_result.get("x_tick_list", []), axis_type="x")
+    y_text = _get_sorted_texts(axis_result.get("y_title", []), axis_type="title_y")
+    y_labels = _get_sorted_texts(axis_result.get("y_tick_list", []), axis_type="y")
+
+    return {
+        "file name": image_name,
+        "doi": _extract_doi_candidates(image_name, task_payload),
+        "x-text": x_text,
+        "x-labels": x_labels,
+        "y-text": y_text,
+        "y-labels": y_labels,
+        "legends": list(legendtexts),
+        "data": _order_data_by_xlabels(data, x_labels),
+    }
+
+
+def _build_paper_format_text(records: list[dict[str, Any]]):
+    lines = []
+    for idx, item in enumerate(records):
+        lines.append(f"file name      : {item.get('file name', '')}")
+        lines.append(f"doi            : {repr(item.get('doi', []))}")
+        lines.append(f"x-text         : {repr(item.get('x-text', []))}")
+        lines.append(f"x-labels       : {repr(item.get('x-labels', []))}")
+        lines.append(f"y-text         : {repr(item.get('y-text', []))}")
+        lines.append(f"y-labels       : {repr(item.get('y-labels', []))}")
+        lines.append(f"legends        : {repr(item.get('legends', []))}")
+        lines.append(f"data           : {repr(item.get('data', {}))}")
+        if idx < len(records) - 1:
+            lines.append("")
+    return "\n".join(lines)
+
+
 def get_y_values(
     img_dir,
     json_dir,
@@ -344,6 +471,7 @@ def get_y_values(
     results = run_inference(image_paths, predict_dir, detector, yolo_device)
 
     y_value_dict = {}
+    paper_format_records = []
 
     for index, path in enumerate(image_paths):
         json_path = json_dir / f"{path.stem}.json"
@@ -487,8 +615,17 @@ def get_y_values(
             _write_json(legend_output_dir / f"{path.stem}.json", legend_payload)
 
         y_value_dict[path.name] = data
+        paper_format_records.append(
+            _build_paper_format_record(
+                image_name=path.name,
+                task_payload=task_payload,
+                axis_result=axis_result,
+                legendtexts=legendtexts,
+                data=data,
+            )
+        )
 
-    return y_value_dict
+    return y_value_dict, paper_format_records
 
 
 def _build_rows(y_value_dict):
@@ -517,7 +654,15 @@ def _build_rows(y_value_dict):
     return rows
 
 
-def save_results(df: pd.DataFrame, y_value_dict: dict, csv_path: str | Path, json_path: str | Path):
+def save_results(
+    df: pd.DataFrame,
+    y_value_dict: dict,
+    csv_path: str | Path,
+    json_path: str | Path,
+    paper_format_records: list[dict[str, Any]] | None = None,
+    paper_json_path: str | Path | None = None,
+    paper_txt_path: str | Path | None = None,
+):
     csv_path = Path(csv_path)
     json_path = Path(json_path)
 
@@ -541,6 +686,27 @@ def save_results(df: pd.DataFrame, y_value_dict: dict, csv_path: str | Path, jso
     print("Saved CSV:", csv_path)
     print("Saved JSON:", json_path)
 
+    records = paper_format_records or []
+
+    if paper_json_path:
+        paper_json_path = Path(paper_json_path)
+        paper_json_path.parent.mkdir(parents=True, exist_ok=True)
+        paper_payload = {
+            "meta": {"n_images": len(records)},
+            "records": records,
+        }
+        with open(paper_json_path, "w", encoding="utf-8") as file:
+            json.dump(paper_payload, file, ensure_ascii=False, indent=2)
+        print("Saved JSON (paper format):", paper_json_path)
+
+    if paper_txt_path:
+        paper_txt_path = Path(paper_txt_path)
+        paper_txt_path.parent.mkdir(parents=True, exist_ok=True)
+        paper_text = _build_paper_format_text(records)
+        with open(paper_txt_path, "w", encoding="utf-8") as file:
+            file.write(paper_text)
+        print("Saved TXT (paper format):", paper_txt_path)
+
 
 def main():
     os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
@@ -562,17 +728,17 @@ def main():
         task5_config.get(
             "debug_options",
             {
-                "enabled": False,
-                "print_logs": True,
+                "enabled": True,
+                "print_logs": False,
                 "show_patch": False,
                 "show_similarity": False,
-                "save_overlay": False,
+                "save_overlay": True,
                 "debug_dir": str(Path(task5_config["output_dir"]) / "debug_viz"),
             },
         )
     )
 
-    y_value_dict = get_y_values(
+    y_value_dict, paper_format_records = get_y_values(
         img_dir=task5_config["input_images"],
         json_dir=task5_config["input_json"],
         predict_dir=task5_config["output_dir"],
@@ -595,6 +761,15 @@ def main():
         y_value_dict=y_value_dict,
         csv_path=task5_config["output_csv"],
         json_path=task5_config["output_json"],
+        paper_format_records=paper_format_records,
+        paper_json_path=task5_config.get(
+            "output_paper_json",
+            str(Path(task5_config["output_dir"]) / "result_paper_format.json"),
+        ),
+        paper_txt_path=task5_config.get(
+            "output_paper_txt",
+            str(Path(task5_config["output_dir"]) / "result_paper_format.txt"),
+        ),
     )
 
 

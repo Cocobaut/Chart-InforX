@@ -1,0 +1,86 @@
+{
+  "meta": {
+    "n_rows": 9,
+    "columns": [
+      "image",
+      "legend",
+      "x_label",
+      "value"
+    ]
+  },
+  "yValueDict": {
+    "PMC4180152___12889_2013_7086_Fig3_HTML.jpg": {
+      "36-55 years": {
+        "All": 25.0,
+        "Female": 32.0,
+        "Male": 17.8
+      },
+      "16-35 years": {
+        "All": 28.3,
+        "Female": 30.7,
+        "Male": 24.6
+      },
+      "<55 years": {
+        "All": 39.3,
+        "Female": 27.2,
+        "Male": 50.9
+      }
+    }
+  },
+  "records": [
+    {
+      "image": "PMC4180152___12889_2013_7086_Fig3_HTML.jpg",
+      "legend": "36-55 years",
+      "x_label": "All",
+      "value": 25.0
+    },
+    {
+      "image": "PMC4180152___12889_2013_7086_Fig3_HTML.jpg",
+      "legend": "36-55 years",
+      "x_label": "Female",
+      "value": 32.0
+    },
+    {
+      "image": "PMC4180152___12889_2013_7086_Fig3_HTML.jpg",
+      "legend": "36-55 years",
+      "x_label": "Male",
+      "value": 17.8
+    },
+    {
+      "image": "PMC4180152___12889_2013_7086_Fig3_HTML.jpg",
+      "legend": "16-35 years",
+      "x_label": "All",
+      "value": 28.3
+    },
+    {
+      "image": "PMC4180152___12889_2013_7086_Fig3_HTML.jpg",
+      "legend": "16-35 years",
+      "x_label": "Female",
+      "value": 30.7
+    },
+    {
+      "image": "PMC4180152___12889_2013_7086_Fig3_HTML.jpg",
+      "legend": "16-35 years",
+      "x_label": "Male",
+      "value": 24.6
+    },
+    {
+      "image": "PMC4180152___12889_2013_7086_Fig3_HTML.jpg",
+      "legend": "<55 years",
+      "x_label": "All",
+      "value": 39.3
+    },
+    {
+      "image": "PMC4180152___12889_2013_7086_Fig3_HTML.jpg",
+      "legend": "<55 years",
+      "x_label": "Female",
+      "value": 27.2
+    },
+    {
+      "image": "PMC4180152___12889_2013_7086_Fig3_HTML.jpg",
+      "legend": "<55 years",
+      "x_label": "Male",
+      "value": 50.9
+    }
+  ]
+}
