@@ -1,20 +1,29 @@
-matplotlib==3.10.8
+﻿# Core scientific stack
 numpy==2.2.6
-opencv_contrib_python==4.10.0.84
-opencv_python==4.12.0.88
-opencv_python_headless==4.12.0.88
-paddleocr==3.3.2
-paddlepaddle_gpu==3.0.0 -i https://www.paddlepaddle.org.cn/packages/stable/cu118/
 pandas==2.3.3
 Pillow==10.4.0
-pytesseract==0.3.13
-timm==1.0.22
-# torch installed separately
-tqdm==4.67.1
-transformers==4.57.1
+matplotlib==3.10.8
+scipy==1.14.1
+
+# Computer vision / detection
+opencv-python==4.12.0.88
 ultralytics==8.3.221
+
+# Deep learning backbones
+# If you need CUDA build, install torch/torchvision from the official PyTorch index first.
+torch==2.5.1
+torchvision==0.20.1
+timm==1.0.22
+
+# OCR
+paddleocr==3.3.2
+paddlepaddle==3.0.0
+# For CUDA 11.8, replace the line above with:
+# paddlepaddle-gpu==3.0.0 -i https://www.paddlepaddle.org.cn/packages/stable/cu118/
+
+# NLP role classifier
+transformers==4.57.1
+tqdm==4.67.1
+
+# App UI
 streamlit==1.40.1
-huggingface-hub==0.36.0
-pyyaml==6.0.2
-packaging==24.2
-gradio==4.42.0

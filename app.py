@@ -1,9 +1,7 @@
-import torch
 import os
 import sys
 import shutil
 import time
-import traceback
 from pathlib import Path
 from typing import List
 import pandas as pd
@@ -13,21 +11,21 @@ import json
 
 # --- PATH CONFIGURATION ---
 BASE_DIR = Path(__file__).resolve().parent
-SUBMISSION_DIR = BASE_DIR / "SubmissionFinalCode"
+SUBMISSION_DIR = BASE_DIR / "src"
 
-# Add SubmissionFinalCode to sys.path so we can import Task modules
+# Add src to sys.path so we can import Task modules
 if str(SUBMISSION_DIR) not in sys.path:
     sys.path.append(str(SUBMISSION_DIR))
 
 # Ensure we are working from the base directory
 os.chdir(BASE_DIR)
 
-# Import Config after setting up paths
-import Config  # noqa: E402
+# Import config after setting up paths
+import config  # noqa: E402
 
 # --- GLOBAL CONFIGURATION ---
 TEMP_UPLOAD_DIR = BASE_DIR / "temp_uploads"
-RESULT_CSV = (BASE_DIR / Config.Output_Excel_Task_4).resolve()
+RESULT_CSV = (BASE_DIR / config.Output_Excel_Task_4).resolve()
 ALLOWED_EXTENSIONS = {".png", ".jpg", ".jpeg", ".bmp", ".tiff"}
 
 # --- PAGE SETUP ---
@@ -125,7 +123,7 @@ def clear_session_data():
     TEMP_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
     
     # 2. Clear Results
-    result_dir = (BASE_DIR / Config.Output_Excel_Task_4).resolve().parent
+    result_dir = (BASE_DIR / config.Output_Excel_Task_4).resolve().parent
     if result_dir.exists():
          # Remove individual results
          individual_dir = result_dir / "individual_results"
@@ -143,10 +141,11 @@ def clear_session_data():
     
 def ensure_folders():
     TEMP_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
-    (BASE_DIR / Config.Dataset_Image).resolve().mkdir(parents=True, exist_ok=True)
-    (BASE_DIR / Config.Output_Json_Task_2).resolve().mkdir(parents=True, exist_ok=True)
-    (BASE_DIR / Config.Output_Json_Task_3).resolve().mkdir(parents=True, exist_ok=True)
-    (BASE_DIR / Config.Output_Json_Task_4).resolve().mkdir(parents=True, exist_ok=True)
+    (BASE_DIR / config.Dataset_Image).resolve().mkdir(parents=True, exist_ok=True)
+    (BASE_DIR / config.Output_Json_Task_2_1).resolve().mkdir(parents=True, exist_ok=True)
+    (BASE_DIR / config.Output_Json_Task_2).resolve().mkdir(parents=True, exist_ok=True)
+    (BASE_DIR / config.Output_Json_Task_3).resolve().mkdir(parents=True, exist_ok=True)
+    (BASE_DIR / config.Output_Json_Task_4).resolve().mkdir(parents=True, exist_ok=True)
 
 # --- PIPELINE LOGIC ---
 # --- HELPER FUNCTIONS ---
@@ -205,9 +204,10 @@ def load_pipeline_modules():
 
 
     try:
-        import Task2 as t2
-        import Task3 as t3
-        import Task4 as t4
+        import text_recognizer as t2
+        import text_detector as t2_1
+        import role_classifier as t3
+        import data_extractor as t4
         
         # Initialize OCR once if needed
         # Initialize OCR once if needed
@@ -224,7 +224,7 @@ def load_pipeline_modules():
              return t2._app_cached_ocr
              
         t2.init_model = init_model_cached
-        return t2, t3, t4
+        return t2_1, t2, t3, t4
     except Exception as e:
         error_str = str(e)
         st.error(f"Failed to load pipeline modules: {e}")
@@ -240,42 +240,71 @@ def load_pipeline_modules():
 
 def run_extraction_pipeline():
     ensure_folders()
-    Task2, Task3, Task4 = load_pipeline_modules()
     
-    if not Task2:
+    if st.session_state.get("mock_mode", False):
+        import time
+        progress_bar = st.progress(0)
+        status_text = st.empty()
+        status_text.text("Mock Mode: Running Task 2 (Detection & Recognition)...")
+        time.sleep(1)
+        progress_bar.progress(33)
+        status_text.text("Mock Mode: Running Task 3 (Role Classification)...")
+        time.sleep(1)
+        progress_bar.progress(66)
+        status_text.text("Mock Mode: Running Task 4 (Data Extraction)...")
+        time.sleep(1)
+        progress_bar.progress(100)
+        
+        # Create Dummy Output
+        t4_output_csv = (BASE_DIR / config.Output_Excel_Task_4).resolve()
+        t4_output_csv.parent.mkdir(parents=True, exist_ok=True)
+        dummy_df = pd.DataFrame({"Category": ["Mock A", "Mock B"], "Value": [10, 20]})
+        dummy_df.to_csv(t4_output_csv, index=False)
+        
+        status_text.success("Mock Pipeline completed successfully!")
+        return
+
+    t2_1, t2, t3, t4 = load_pipeline_modules()
+    
+    if not t2:
         st.error("Pipeline modules failed to load.")
         return
 
     # Configure pipeline to use temp directory
-    Config.Dataset_Image = str(TEMP_UPLOAD_DIR)
+    config.Dataset_Image = str(TEMP_UPLOAD_DIR)
     
     # RELOAD configs to ensure fresh state if modified
-    Task2.Task2_Config = Config.returnTestTask2_Config()
-    Task3.TEST_CONFIG = Config.returnTestTask3_Config()
-    Task4.TASK4_CONFIG = Config.returnTestTask4_Config()
+    t2.Task2_Config = config.returnTestTask2_Config()
+    t3.TEST_CONFIG = config.returnTestTask3_Config()
+    t4.TASK4_CONFIG = config.returnTestTask4_Config()
     
     # Explicitly set input/output paths
-    Task2.Task2_Config["input"] = str(TEMP_UPLOAD_DIR)
-    t2_output = (BASE_DIR / Config.Output_Json_Task_2).resolve()
-    Task2.Task2_Config["output"] = str(t2_output)
+    t2_1.Task2_1Config["input"] = str(TEMP_UPLOAD_DIR)
+    t2.Task2_Config["input"] = str(TEMP_UPLOAD_DIR)
+    t2_1_output = (BASE_DIR / config.Output_Json_Task_2_1).resolve()
+    t2_output = (BASE_DIR / config.Output_Json_Task_2).resolve()
+    t2_1.Task2_1Config["output"] = str(t2_1_output)
+    t2.Task2_Config["input_json"] = str(t2_1_output)
+    t2.Task2_Config["output"] = str(t2_output)
     
-    Task3.TEST_CONFIG["data_dir_images"] = str(TEMP_UPLOAD_DIR)
-    Task3.TEST_CONFIG["data_dir_json"] = str(t2_output)
-    t3_output = (BASE_DIR / Config.Output_Json_Task_3).resolve()
-    Task3.TEST_CONFIG["output_dir"] = str(t3_output)
+    t3.TEST_CONFIG["data_dir_images"] = str(TEMP_UPLOAD_DIR)
+    t3.TEST_CONFIG["data_dir_json"] = str(t2_output)
+    t3_output = (BASE_DIR / config.Output_Json_Task_3).resolve()
+    t3.TEST_CONFIG["output_dir"] = str(t3_output)
     
-    Task4.TASK4_CONFIG["input_images"] = str(TEMP_UPLOAD_DIR)
-    Task4.TASK4_CONFIG["input_json"] = str(t3_output)
-    t4_output_csv = (BASE_DIR / Config.Output_Excel_Task_4).resolve()
-    Task4.TASK4_CONFIG["output_excel"] = str(t4_output_csv)
+    t4.TASK4_CONFIG["input_images"] = str(TEMP_UPLOAD_DIR)
+    t4.TASK4_CONFIG["input_json"] = str(t3_output)
+    t4_output_csv = (BASE_DIR / config.Output_Excel_Task_4).resolve()
+    t4.TASK4_CONFIG["output_excel"] = str(t4_output_csv)
 
     # Debug info
     with st.expander("Debug: Configuration Paths"):
-        st.write(f"**Input Images:** `{Task2.Task2_Config['input']}`")
-        st.write(f"**Task 2 Output:** `{Task2.Task2_Config['output']}`")
-        st.write(f"**Task 3 Input:** `{Task3.TEST_CONFIG['data_dir_json']}`")
-        st.write(f"**Task 3 Output:** `{Task3.TEST_CONFIG['output_dir']}`")
-        st.write(f"**Task 4 CSV:** `{Task4.TASK4_CONFIG['output_excel']}`")
+        st.write(f"**Input Images:** `{t2.Task2_Config['input']}`")
+        st.write(f"**Task 1 Detection Output:** `{t2_1.Task2_1Config['output']}`")
+        st.write(f"**Task 2 Output:** `{t2.Task2_Config['output']}`")
+        st.write(f"**Task 3 Input:** `{t3.TEST_CONFIG['data_dir_json']}`")
+        st.write(f"**Task 3 Output:** `{t3.TEST_CONFIG['output_dir']}`")
+        st.write(f"**Task 4 CSV:** `{t4.TASK4_CONFIG['output_excel']}`")
 
     progress_bar = st.progress(0)
     status_text = st.empty()
@@ -283,7 +312,8 @@ def run_extraction_pipeline():
     try:
         # TASK 2
         status_text.text("Running Task 2: Text Detection & Recognition...")
-        Task2.main()
+        t2_1.main()
+        t2.main()
         
         # Verify Task 2
         t2_files = list(t2_output.glob("*.json"))
@@ -295,7 +325,7 @@ def run_extraction_pipeline():
 
         # TASK 3
         status_text.text("Running Task 3: Text Role Classification...")
-        Task3.main()
+        t3.main()
         
         # Verify Task 3
         t3_files = list(t3_output.glob("*.json"))
@@ -307,7 +337,7 @@ def run_extraction_pipeline():
 
         # TASK 4
         status_text.text("Running Task 4: Chart Value Extraction...")
-        Task4.main()
+        t4.main()
         
         if not t4_output_csv.exists():
              st.error("Task 4 finished but CSV result file was not created.")
@@ -341,10 +371,13 @@ def render_sidebar():
             clear_session_data()
             st.rerun()
 
-        st.caption(f"v1.0.0 | Session: {st.session_state.get('session_id', 'N/A')[:8]}...")
+        st.markdown("---")
+        st.session_state["mock_mode"] = st.checkbox(
+            "🚀 Try UI Only (No Model)", 
+            value=st.session_state.get("mock_mode", False),
+            help="Enable this to test the layout with dummy data without loading PyTorch"
+        )
 
-def render_main_content():
-    st.title("Bar Chart Information Extraction")
     st.markdown("### Automated data extraction from bar chart images")
     
     # File Uploader
@@ -422,11 +455,11 @@ def render_main_content():
                             original_img_path = img_map[stem]
                             
                             # Locate the Task 2 JSON file
-                            # Task 2 output is in Config.Output_Json_Task_2
+                            # Task 2 output is in config.Output_Json_Task_2
                             # Filename usually matches stem + extension or just stem + .json
                             # Based on Task2.py, it likely uses original filename + .json
                             # Let's try to find it.
-                            task2_json_dir = (BASE_DIR / Config.Output_Json_Task_2).resolve()
+                            task2_json_dir = (BASE_DIR / config.Output_Json_Task_2).resolve()
                             # Try exact match 
                             # Possible naming: "image.png.json" or "image.json"
                             # Task2 main loop: path.name -> save path / path.name (but with .json appended or replaced?)
@@ -495,7 +528,7 @@ def main():
     ensure_session_state()
     inject_custom_css()
     render_sidebar()
-    render_main_content()
+    # render_main_content() # function is combined with sidebar logic
 
 if __name__ == "__main__":
     main()
