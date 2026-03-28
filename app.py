@@ -770,7 +770,7 @@ def load_pipeline_modules():
         import text_detector as t1
         import text_recognizer as t1_rec
         import role_classifier as t2_role
-        import bar_detection_raw_data_extraction as t5_extract
+        import bar_detection_extraction as t5_extract
 
         if not hasattr(t1_rec, "original_init_model"):
             t1_rec.original_init_model = t1_rec.init_model

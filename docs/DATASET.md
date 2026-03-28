@@ -7,8 +7,11 @@ The dataset contains thousands of chart images sourced from PubMed Central (PMC)
 1. Chart Classification (e.g., Vertical Bar, Line, Pie, Scatter).
 2. Text Detection and Recognition.
 3. Text Role Classification (Titles, Labels, Ticks).
-4. Plot Element Detection (Bars, lines points).
-5. Data Extraction (Recreating the original data table).
+4. Axis Analysis
+5. Legend Analysis
+6. Data Extraction
+    a. Plot Element Detection/Classification
+    b. Raw Data Extractio
 
 ## ✂️ Preprocessing for This Project
 In this specific project, our focus is **exclusively on Vertical Bar Charts**. 

@@ -2,7 +2,7 @@
 
 # Chart InforX
 
-**Fully automated end-to-end framework to extract data bar chart images**
+**Fully automated end-to-end system for extract data from bar chart images**
 
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg?logo=python&logoColor=white)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?logo=PyTorch&logoColor=white)](https://pytorch.org/)
@@ -19,30 +19,8 @@
 
 ## 📖 Introduction
 
-Chart InforX is a fully automated end-to-end framework to extract data from bar chart images and converting them into structured data such as JSON or CSV. Heavily inspired by the **ICPR 2022 Chart-Info Challenge**, this system integrates Computer Vision, OCR, and Multimodal NLP to reconstruct the original data behind chart images.
+Chart InforX is a fully automated end-to-end system to extract data from bar chart images and converting them into structured data such as JSON or CSV. Heavily inspired by the **ICPR 2022 Chart-Info Challenge**, this system integrates Computer Vision, OCR, and Multimodal NLP to reconstruct the original data behind chart images.
 
-The implementation follows the Chart-Info style workflow:
-
-- **🔍 Robust Text Detection:** Locates text boundaries accurately using Object Bounding Box (YOLO OBB).
-- **📝 Precise Text Recognition:** Extracts text strings with high accuracy using PaddleOCR.
-- **🧠 Multimodal Role Classification:** Contextually categorizes text (e.g., Title, X-axis, Y-axis, Legend) leveraging **LayoutLMv3**.
-- **📏 Contextual Axis Analysis:** Reconstructs coordinate systems and calculates Pixel-to-Value mathematical mappings.
-- **🎨 Intelligent Legend Matching:** Correlates colors and chart elements using **ResNet50** embedding distances.
-- **✨ Detect bars and extract data:**: use YOLOv8 and estimate algorithm to detect and estimate final data values for each bar. With multi-format output: `result.json`, `result.csv`, `result.txt`.
-- **💻 Interactive Web App:** Features a clean, user-friendly interface built with **Streamlit** for effortless uploading, processing, and visual result verification.
-
-
-## Documentation Roadmap
-
-Use this reading path to move from quick usage to full technical detail.
-
-| Your goal | Read first | Then continue with |
-|---|---|---|
-| Run the project quickly | [docs/RUN_GUIDELINE.md](docs/RUN_GUIDELINE.md) | [Quickstart](#quickstart) |
-| Understand model + extraction logic | [docs/METHODOLOGY.md](docs/METHODOLOGY.md) | [Pipeline Overview](#pipeline-overview) |
-| Understand dataset scope and assumptions | [docs/DATASET.md](docs/DATASET.md) | [Current Limitations](#current-limitations) |
-| Reproduce demo/debug workflow | [demo/DEMO_GUIDE.md](demo/DEMO_GUIDE.md) | [Run the Web App](#5-run-the-web-app) |
-| Verify reported metrics | [docs/DATH_Report_Nhóm 9_Final.pdf](docs/DATH_Report_Nh%C3%B3m%209_Final.pdf) | [Evaluation Highlights](#evaluation-highlights-from-report) |
 
 ## 🛠 Pipeline Overview
 
@@ -50,98 +28,42 @@ Chart InforX processes images through a carefully orchestrated 5-stage pipeline:
 
 ![Pipeline Overview](docs/Pipeline.png)
 
-1. **Text Detection & Recognition:** YOLO identifies text regions, and PaddleOCR reads them.
-2. **Role Classification:** LayoutLMv3 assigns semantic roles to each detected text bounding box based on layout and content.
-3. **Axis Analysis:** Detects the main plot area, identifies X/Y axes, and infers the scaling step.
-4. **Legend Analysis:** Maps visual markers (colors/patterns) to their corresponding legend labels via ResNet50.
-5. **Data Extraction:** Computes exact bar heights, applies the axis scaling ratio, and outputs the final structured data.
+- **🔍 Text Detection:** Locates text boundaries accurately using Object Bounding Box (YOLO OBB).
+![Text Detection](data\pipeline_outputs\task1_detection\visualized_images\PMC4180152___12889_2013_7086_Fig3_HTML.jpg)
 
-For full implementation-level explanation, see [docs/METHODOLOGY.md](docs/METHODOLOGY.md).
+- **📝 Text Recognition:** Extracts text strings with high accuracy using PaddleOCR.
+- **🧠 Multimodal Role Classification:** Contextually categorizes text (e.g., Title, X-axis, Y-axis, Legend) leveraging **LayoutLMv3**.
+![Multimodal Role Classification](data\pipeline_outputs\task2_role_classifier\visualization\PMC4180152___12889_2013_7086_Fig3_HTML_vis.png)
+- **📏 Axis Analysis:** Reconstructs coordinate systems and calculates Pixel-to-Value mathematical mappings.
+- **🎨 Legend Matching:** Correlates colors and chart elements using **ResNet50** embedding distances.
+- **✨ Detect bars and extract data:**: use YOLOv8 and estimate algorithm to detect and estimate final data values for each bar. With multi-format output: `result.json`, `result.csv`, `result.txt`.
+![Detect bars and legend analysis](data\pipeline_outputs\task5_detect_extraction\debug_viz\PMC4180152___12889_2013_7086_Fig3_HTML_debug.png)
+- **💻 Interactive Web App:** Features a clean, user-friendly interface built with **Streamlit** for effortless uploading, processing, and visual result verification.
 
-### Models Used
+For full implementation-level explanation, see [METHODOLOGY.md](docs/METHODOLOGY.md).
 
-| Component | Model | Input | Output |
-|---|---|---|---|
-| Text Detection | YOLOv8 (fine-tuned) | Chart image | Text bounding boxes |
-| Text Recognition | PaddleOCR (PP-OCRv4) | Cropped text regions | Text string + confidence score |
-| Text Role Classification | LayoutLMv3 (multimodal transformer) | OCR text + layout + image context | Semantic role label per text box |
-| Plot Element Detection | YOLOv8s | Chart image | Plot region, legend patches, bar boxes |
+## Visualizations
 
-### Role Taxonomy (LayoutLMv3)
+### App Interface 0
 
-- `Chart_Title`
-- `Axis_Title`
-- `Tick_Label`
-- `Tick_Grouping`
-- `Legend_Title`
-- `Legend_Label`
-- `Value_Label`
-- `Mark_Label`
-- `Other`
+![App Interface 0](demo/app_0.png)
 
-LayoutLMv3 combines:
+### App Interface 1
 
-- Text embedding
-- Layout embedding
-- Image embedding
+![App Interface 1](demo/app_1.png)
 
-Training objective:
+### Task 1 Output
 
-- Weighted Cross Entropy to reduce class imbalance effects.
+![Task 1 Output](demo/task_1.png)
 
-### Axis Analysis
+### Task 2 Output
 
-The axis system is inferred from the detected plot region:
+![Task 2 Output](demo/task_2.png)
 
-- X-axis: bottom edge of the plot.
-- Y-axis: left edge of the plot.
+### Task 5 Output
 
-Tick labels are separated with geometric constraints:
+![Task 5 Output](demo/task_5.png)
 
-- Cross-product orientation checks.
-- Distance-to-axis thresholds.
-
-### Legend Analysis
-
-Legend entries are created by matching legend labels with legend patches.
-
-Matching strategy:
-
-- Spatial alignment
-- Distance matrix construction
-- Hungarian algorithm for optimal pairing
-
-Output format:
-
-- `[(label, patch), ...]`
-
-### Data Extraction Logic
-
-Step 1: Bar-to-Series mapping
-
-- Crop bar patches.
-- Extract visual embeddings with ResNet50.
-- Match each bar embedding with legend patch embeddings via cosine similarity.
-
-$$
-\mathrm{Series}(b_i) = \arg\max_j\; \cos\left(v_{bar_i}, v_{legend_j}\right)
-$$
-
-Step 2: Bar-to-Category mapping
-
-- Apply nearest-neighbor matching on the X-axis.
-
-$$
-\mathrm{Category}(b_i) = \arg\min_k\; \mathrm{distance}(x_{bar_i}, x_{tick_k})
-$$
-
-Step 3: Value estimation
-
-- Convert bar pixel height into chart value using axis scale.
-
-$$
-V = V_{base} + h_{pixel} \times \mathrm{scale}
-$$
 
 ## Quickstart
 
@@ -152,7 +74,6 @@ Need full setup + troubleshooting details? See [docs/RUN_GUIDELINE.md](docs/RUN_
 ```text
 Chart_InforX/
   app.py
-  requirements.txt
   src/
     config.py
     pipeline.py
@@ -162,18 +83,12 @@ Chart_InforX/
     axis_analysis.py
     legend_analysis.py
     data_extractor.py
-    bar_detection_raw_data_extraction.py
+    bar_detection_extraction.py
   data/
     sample_images/
     pipeline_outputs/
-      task1_detection/
-      task1_recognize/
-      task2_role_classifier/
-      task3_axis_analysis/
-      task4_legend_analysis/
-      task5_detect_extraction/
-  docs/
   demo/
+  docs/
   weights/
 ```
 
@@ -235,7 +150,7 @@ The pipeline runs in this order:
 1. `text_detector.py`
 2. `text_recognizer.py`
 3. `role_classifier.py`
-4. `bar_detection_raw_data_extraction.py`
+4. `bar_detection_extraction.py`
 
 ### 7. Check Outputs
 
@@ -247,8 +162,7 @@ Important files:
 
 - `result.csv`
 - `result.json`
-- `result_paper_format.json`
-- `result_paper_format.txt`
+
 
 ## Evaluation Highlights (from report)
 
@@ -270,28 +184,6 @@ The following values are reported in [docs/DATH_Report_Nhóm 9_Final.pdf](docs/D
 
 Note: these are report-level results and may vary with different environments, weights, and datasets.
 
-## Project Structure
-
-```text
-Chart_InforX/
-  app.py
-  src/
-    config.py
-    pipeline.py
-    text_detector.py
-    text_recognizer.py
-    role_classifier.py
-    axis_analysis.py
-    legend_analysis.py
-    data_extractor.py
-    bar_detection_raw_data_extraction.py
-  data/
-    sample_images/
-    pipeline_outputs/
-  demo/
-  docs/
-  weights/
-```
 
 ## Documentation
 
@@ -339,8 +231,18 @@ README-to-docs mapping:
 - Huỳnh Văn Thống
 - Trần Hồng Tài
 
-## License
+## References
 
-This project is licensed under the MIT License.
+* **Davila, K., et al. (2021).** "Chart Mining: A Survey of Methods for Automated Chart Analysis." *IEEE Transactions on Pattern Analysis and Machine Intelligence (TPAMI)*. [DOI: 10.1109/TPAMI.2020.3015423](https://doi.org/10.1109/TPAMI.2020.3015423)
+* **Wang, J., et al. (2018).** "Chart-Text: A Fully Automated Chart Image Descriptor." *arXiv preprint arXiv:1812.10636*. [Link arXiv](https://arxiv.org/abs/1812.10636)
+
+* **Cheng, P., et al. (2023).** "ChartReader: A Hierarchical Chart Analysis and Interpretation Framework." Source code: [Cvrane/ChartReader](https://github.com/Cvrane/ChartReader)
+* **Mustafa, O., et al. (2024).** "ChartEye: A Deep Learning Framework for Chart Information Extraction." *arXiv preprint arXiv:2408.16123*. [Link arXiv](https://arxiv.org/abs/2408.16123)
+* **Deng, C., et al. (2021).** "ChartOCR: Data Extraction from Charts Images via a Deep Hybrid Framework." *In Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision (WACV)*. [Link Paper](https://openaccess.thecvf.com/content/WACV2021/html/Deng_ChartOCR_Data_Extraction_From_Charts_Images_via_a_Deep_Hybrid_WACV_2021_paper.html)
+
+### 📂 Datasets & Benchmarks
+* **Palma, J., et al. (2024).** "CHART-Info 2024: A dataset for Chart Analysis and Recognition." *arXiv preprint*.
+* **ICPR 2022 Chart Analysis and Recognition Team.** "ICPR 2022 – CHART Competition." *IEEE*. [Competition Link](https://chart-info.github.io/chart-competition-2022/)
+
 
 

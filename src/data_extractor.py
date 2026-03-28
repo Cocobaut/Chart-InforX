@@ -1,7 +1,7 @@
 ﻿from __future__ import annotations
 
 import config
-import bar_detection_raw_data_extraction
+import bar_detection_extraction
 
 
 # Legacy entrypoint config expected by app.py.
@@ -21,7 +21,7 @@ def main():
         if "output_csv" in mapped:
             config.Output_Excel_Task_4 = mapped["output_csv"]
 
-    bar_detection_raw_data_extraction.main()
+    bar_detection_extraction.main()
 
 
 if __name__ == "__main__":

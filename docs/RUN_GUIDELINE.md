@@ -1,15 +1,16 @@
-﻿# Huong Dan Chay Du An
+﻿
 
+# Project Run Guide
 
-## 1. Yeu cau moi truong
+## 1. Environment Requirements
 
-- Python `3.10+` (khuyen nghi `3.10` hoac `3.11`)
-- Windows/Linux deu duoc
-- Neu chay GPU: NVIDIA driver + CUDA phu hop
+* Python `3.10+` (recommended `3.10` or `3.11`)
+* Windows or Linux
+* For GPU: compatible NVIDIA driver + CUDA
 
-## 2. Cai dat nhanh
+## 2. Quick Setup
 
-Tu thu muc goc project `Chart_InforX`:
+From the project root directory `Chart_InforX`:
 
 ```powershell
 python -m venv .venv
@@ -18,85 +19,97 @@ python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-Neu ban chay GPU voi Paddle:
-- Trong `requirements.txt` dang de `paddlepaddle` (CPU).
-- Doi sang `paddlepaddle-gpu` theo dong comment trong file va cai lai.
+If running Paddle with GPU:
 
-## 3. Chuan bi model weights
+* `requirements.txt` currently uses `paddlepaddle` (CPU).
+* Replace it with `paddlepaddle-gpu` according to the comment in the file and reinstall.
 
-Dam bao cac file/thu muc sau ton tai:
+## 3. Prepare Model Weights
+
+Ensure the following files/folders exist:
 
 ```text
 weights/
   yolo_text.pt
   best_det.pt
   yolo_elements.pt
-  checkpoint-10000/   # thu muc model LayoutLMv3 da extract
+  checkpoint-10000/   # extracted LayoutLMv3 model folder
 ```
 
-Luu y:
-- Neu ban chi co file nen `checkpoint-10000.rar` thi can giai nen thanh thu muc `weights/checkpoint-10000`.
+Note:
 
-## 4. Cau hinh duong dan
+* If you only have `checkpoint-10000.rar`, extract it to:
 
-Tat ca duong dan cau hinh nam trong file:
-- `src/config.py`
+```
+weights/checkpoint-10000
+```
 
-Cac config chinh hien tai:
-- `Task1_detection`
-- `Task1_recognize`
-- `Task2_role_classifier`
-- `Task3_axis_analysis`
-- `Task4_legend_analysis`
-- `Task5_detect_extraction`
+## 4. Path Configuration
 
-Mac dinh:
-- Input image: `data/sample_images`
-- Output: `data/pipeline_outputs/...`
+All paths are configured in:
 
-Neu ban muon thay data dau vao, sua:
-- `Task1_detection["input"]`
-- `Task1_recognize["input"]`
-- `Task2_role_classifier["data_dir_images"]`
-- `Task5_detect_extraction["input_images"]`
+* `src/config.py`
 
-## 5. Chay pipeline bang command line
+Current main configs:
 
-### Cach 1: Chay toan bo pipeline
+* `Task1_detection`
+* `Task1_recognize`
+* `Task2_role_classifier`
+* `Task3_axis_analysis`
+* `Task4_legend_analysis`
+* `Task5_detect_extraction`
+
+Defaults:
+
+* Input image: `data/sample_images`
+* Output: `data/pipeline_outputs/...`
+
+To change input data, modify:
+
+* `Task1_detection["input"]`
+* `Task1_recognize["input"]`
+* `Task2_role_classifier["data_dir_images"]`
+* `Task5_detect_extraction["input_images"]`
+
+## 5. Run Pipeline via Command Line
+
+### Method 1: Run Full Pipeline
 
 ```powershell
 python src/pipeline.py
 ```
 
-Pipeline se chay theo thu tu:
+Execution order:
+
 1. `text_detector.py` (Task1 detection)
 2. `text_recognizer.py` (Task1 recognize)
 3. `role_classifier.py` (Task2 role classifier)
-4. `bar_detection_raw_data_extraction.py` (Task5 detect + extraction, dong thoi xuat ket qua Task3/Task4)
+4. `bar_detection_extraction.py` (Task5 detect + extraction, also outputs Task3/Task4)
 
-### Cach 2: Chay tung buoc
+### Method 2: Run Step-by-Step
 
 ```powershell
 python src/text_detector.py
 python src/text_recognizer.py
 python src/role_classifier.py
-python src/bar_detection_raw_data_extraction.py
+python src/bar_detection_extraction.py
 ```
 
-## 6. Chay app Streamlit
+## 6. Run Streamlit App
 
 ```powershell
 streamlit run app.py
 ```
 
-Sau do:
-1. Upload anh chart
-2. Bam `Run Extraction`
-3. Xem va tai ket qua tren giao dien
+Then:
 
-## 7. Vi tri ket qua output
+1. Upload chart image
+2. Click `Run Extraction`
+3. View and download results in UI
 
-Du lieu output mac dinh:
+## 7. Output Locations
+
+Default output directory:
 
 ```text
 data/pipeline_outputs/
@@ -110,34 +123,43 @@ data/pipeline_outputs/
     result.json
 ```
 
-## 8. Loi thuong gap va cach xu ly
+## 8. Common Errors and Fixes
 
-### Loi `ModuleNotFoundError: timm`
+### `ModuleNotFoundError: timm`
 
 ```powershell
 pip install timm==1.0.22
 ```
 
-### Loi khong tim thay weights
+### Weights Not Found
 
-Kiem tra lai:
-- Ten file trong `weights/`
-- Duong dan trong `src/config.py`
+Check:
 
-### Loi CUDA
+* File names in `weights/`
+* Paths in `src/config.py`
 
-Neu may khong co GPU hoac mismatch CUDA:
-- Doi `device` trong config ve `"cpu"`
-- Cai ban CPU cho torch/paddle
+### CUDA Error
 
-## 9. Smoke test nhanh
+If no GPU or CUDA mismatch:
 
-De test nhanh, dat 1-2 anh vao `data/sample_images`, sau do chay:
+* Change `device` in config to `"cpu"`
+* Install CPU versions of torch/paddle
+
+## 9. Quick Smoke Test
+
+Place 1–2 images into:
+
+```
+data/sample_images
+```
+
+Then run:
 
 ```powershell
 python src/pipeline.py
 ```
 
-Neu thanh cong, file sau se duoc tao:
-- `data/pipeline_outputs/task5_detect_extraction/result.csv`
-- `data/pipeline_outputs/task5_detect_extraction/result.json`
+If successful, these files will be created:
+
+* `data/pipeline_outputs/task5_detect_extraction/result.csv`
+* `data/pipeline_outputs/task5_detect_extraction/result.json`
