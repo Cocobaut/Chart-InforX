@@ -19,7 +19,7 @@
 
 ## 📖 Introduction
 
-Chart InforX is a fully automated end-to-end system to extract data from bar chart images and converting them into structured data such as JSON or CSV. Heavily inspired by the **ICPR 2022 Chart-Info Challenge**, this system integrates Computer Vision, OCR, and Multimodal NLP to reconstruct the original data behind chart images.
+Chart InforX is a fully automated end-to-end system to extract data from bar chart images and converting them into structured data such as JSON or CSV. Heavily inspired by the **ICPR 2022 Chart-Info Challenge**, this system integrates Computer Vision, OCR, and Multimodal to reconstruct the original data behind chart images.
 
 
 ## 🛠 Pipeline Overview
