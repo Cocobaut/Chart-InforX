@@ -29,15 +29,13 @@ Chart InforX processes images through a carefully orchestrated 5-stage pipeline:
 ![Pipeline Overview](docs/Pipeline.png)
 
 - **🔍 Text Detection:** Locates text boundaries accurately using Object Bounding Box (YOLO OBB).
-![Text Detection](data\pipeline_outputs\task1_detection\visualized_images\PMC4180152___12889_2013_7086_Fig3_HTML.jpg)
+
 
 - **📝 Text Recognition:** Extracts text strings with high accuracy using PaddleOCR.
 - **🧠 Multimodal Role Classification:** Contextually categorizes text (e.g., Title, X-axis, Y-axis, Legend) leveraging **LayoutLMv3**.
-![Multimodal Role Classification](data\pipeline_outputs\task2_role_classifier\visualization\PMC4180152___12889_2013_7086_Fig3_HTML_vis.png)
 - **📏 Axis Analysis:** Reconstructs coordinate systems and calculates Pixel-to-Value mathematical mappings.
 - **🎨 Legend Matching:** Correlates colors and chart elements using **ResNet50** embedding distances.
 - **✨ Detect bars and extract data:**: use YOLOv8 and estimate algorithm to detect and estimate final data values for each bar. With multi-format output: `result.json`, `result.csv`, `result.txt`.
-![Detect bars and legend analysis](data\pipeline_outputs\task5_detect_extraction\debug_viz\PMC4180152___12889_2013_7086_Fig3_HTML_debug.png)
 - **💻 Interactive Web App:** Features a clean, user-friendly interface built with **Streamlit** for effortless uploading, processing, and visual result verification.
 
 For full implementation-level explanation, see [METHODOLOGY.md](docs/METHODOLOGY.md).
